@@ -8,19 +8,27 @@ interface CamperCardProps {
   name: string;
   username: string;
   emoji: string;
-  onSave: (newUsername: string) => void;
+  onSave: (newUsername: string) => Promise<void>;
 }
 
 const CamperCard = ({ name, username, emoji, onSave }: CamperCardProps) => {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(username);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [saving, setSaving] = useState(false);
 
-  const handleSave = () => {
-    onSave(draft);
-    setEditing(false);
-    setShowSuccess(true);
-    setTimeout(() => setShowSuccess(false), 2000);
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      await onSave(draft);
+      setEditing(false);
+      setShowSuccess(true);
+      setTimeout(() => setShowSuccess(false), 2000);
+    } catch (err) {
+      // Error handling is done in parent component
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleCancel = () => {
@@ -43,11 +51,12 @@ const CamperCard = ({ name, username, emoji, onSave }: CamperCardProps) => {
                   onChange={(e) => setDraft(e.target.value)}
                   className="h-9 text-sm"
                   autoFocus
+                  disabled={saving}
                 />
-                <Button size="sm" onClick={handleSave} className="shrink-0">
-                  <Check className="h-4 w-4 mr-1" /> Save
+                <Button size="sm" onClick={handleSave} className="shrink-0" disabled={saving}>
+                  <Check className="h-4 w-4 mr-1" /> {saving ? 'Saving...' : 'Save'}
                 </Button>
-                <Button size="sm" variant="outline" onClick={handleCancel} className="shrink-0">
+                <Button size="sm" variant="outline" onClick={handleCancel} className="shrink-0" disabled={saving}>
                   <X className="h-4 w-4 mr-1" /> Cancel
                 </Button>
               </div>
